@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute"
@@ -19,8 +20,8 @@ var (
 	subscriptionID     string
 	location           = "westus2"
 	resourceGroupName  = "fengwang-dev"
-	vmScaleSetName     = "reimage-test"
-	instanceId         = "0"
+	vmScaleSetName     = "reimage-test-2"
+	instanceId         = "7"
 )
 
 func main() {
@@ -35,7 +36,7 @@ func main() {
 	}
 	ctx := context.Background()
 	var totalLatency int64
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 10; i++ {
 		log.Printf("Run #%d", i)
 		start := time.Now()
 		err = reimageVM(ctx, cred)
@@ -46,6 +47,7 @@ func main() {
 		elapsed := time.Since(start).Milliseconds()
 		log.Printf("Spent %d ms", elapsed)
 		totalLatency += elapsed
+		time.Sleep(30 * time.Second)
 	}
 	log.Printf("The average latency of reimage is %d ms", totalLatency/100)
 }
@@ -65,7 +67,9 @@ func reimageVM(ctx context.Context, cred azcore.TokenCredential) error {
 		return err
 	}
 
-	_, err = pollerResp.PollUntilDone(ctx, nil)
+	_, err = pollerResp.PollUntilDone(ctx, &runtime.PollUntilDoneOptions{
+		Frequency: time.Second,
+	})
 	if err != nil {
 		return err
 	}
